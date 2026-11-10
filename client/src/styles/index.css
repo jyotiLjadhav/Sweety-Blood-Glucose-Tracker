@@ -38,7 +38,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #000000;
     --surface: #1c1c1e;
     --fill: rgba(120, 120, 128, 0.32);
@@ -61,6 +61,29 @@
     --shadow: none;
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --fill: rgba(120, 120, 128, 0.32);
+  --fill-2: rgba(120, 120, 128, 0.2);
+  --label: #ffffff;
+  --label-2: rgba(235, 235, 245, 0.62);
+  --label-3: rgba(235, 235, 245, 0.3);
+  --sep: rgba(84, 84, 88, 0.6);
+  --blur-bg: rgba(29, 29, 31, 0.82);
+  --brand: #ff375f;
+  --blue: #0a84ff;
+  --green: #30d158;
+  --orange: #ff9f0a;
+  --red: #ff453a;
+  --purple: #bf5af2;
+  --slot-morning: #ff9f0a;
+  --slot-breakfast: #0a84ff;
+  --slot-lunch: #30d158;
+  --slot-dinner: #bf5af2;
+  --shadow: none;
+  color-scheme: dark;
 }
 
 *,
@@ -273,6 +296,7 @@ input[type='date'].input { min-width: 0; }
 
 .field-error, .form-error { color: var(--red); font-size: 14px; font-weight: 500; display: flex; gap: 6px; }
 .form-error { background: color-mix(in srgb, var(--red) 10%, transparent); padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; }
+.form-success { background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--label); padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 14px; font-weight: 500; }
 .field-hint { font-size: 13px; color: var(--label-2); }
 .field-hint[class*='status-'] { font-weight: 600; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }

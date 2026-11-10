@@ -1,4 +1,5 @@
 import axios from 'axios';
+import mockAdapter from './mockApi';
 
 const TOKEN_KEY = 'sweety_token';
 
@@ -27,6 +28,8 @@ export const tokenStore = {
 };
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' });
+// Hosted preview only: answer API calls in the browser instead of hitting a server
+if (import.meta.env.VITE_MOCK) api.defaults.adapter = mockAdapter;
 
 api.interceptors.request.use((config) => {
   const token = tokenStore.get();

@@ -34,10 +34,9 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   }, []);
 
+  // Registering only creates the account. The person then logs in on the login page.
   const register = useCallback(async (name, email, password) => {
-    const { data } = await api.post('/auth/register', { name, email, password });
-    tokenStore.set(data.token);
-    setUser(data.user);
+    await api.post('/auth/register', { name, email, password });
   }, []);
 
   const logout = useCallback(() => {

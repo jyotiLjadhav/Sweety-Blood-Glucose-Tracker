@@ -6,7 +6,7 @@ A full-stack web app for people with diabetes to log blood glucose readings and 
 
 ## Features
 
-- Register / log in (passwords hashed with **bcrypt**, JWT sessions); every user sees only their own data
+- Register, then log in on the login page (passwords hashed with **bcrypt**, JWT sessions); every user sees only their own data
 - Add, view, edit and delete readings (date, one of 4 slots, whole-number value in mg/dL)
 - All five Kenpath validation rules, enforced on the **backend** and mirrored in the UI with the exact messages
 - Three reports: **Daily**, **Month-to-date**, **Previous month** — highest, lowest, average (1 dp), count, plus a friendly empty state

@@ -16,6 +16,7 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
 
   if (user) return <Navigate to={location.state?.from || '/'} replace />;
 
@@ -24,6 +25,7 @@ export default function Login() {
     setForm((f) => ({ ...f, [field]: e.target.value }));
     setErrors((er) => ({ ...er, [field]: undefined }));
     setFormError('');
+    setNotice('');
   };
 
   function validate() {
@@ -44,8 +46,15 @@ export default function Login() {
     setBusy(true);
     setFormError('');
     try {
-      if (isRegister) await register(form.name.trim(), form.email.trim(), form.password);
-      else await login(form.email.trim(), form.password);
+      if (isRegister) {
+        await register(form.name.trim(), form.email.trim(), form.password);
+        // Account created: send the person to the login screen to sign in
+        setMode('login');
+        setForm({ name: '', email: form.email.trim(), password: '' });
+        setNotice('Account created. Please log in.');
+        return;
+      }
+      await login(form.email.trim(), form.password);
       navigate(location.state?.from || '/', { replace: true });
     } catch (err) {
       const field = errorField(err);
@@ -76,6 +85,7 @@ export default function Login() {
                 setMode(m);
                 setErrors({});
                 setFormError('');
+                setNotice('');
               }}
               type="button"
             >
@@ -108,6 +118,7 @@ export default function Login() {
             {errors.password && <p className="field-error" role="alert">{errors.password}</p>}
           </div>
 
+          {notice && <p className="form-success" role="status">{notice}</p>}
           {formError && <p className="form-error" role="alert">{formError}</p>}
 
           <button className="btn btn-primary btn-block btn-lg" disabled={busy}>
