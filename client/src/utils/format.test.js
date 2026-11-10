@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
-  dayConflict, formatRange, glucoseStatus, isValidDateString, shiftMonth, validateReading,
+  dayConflict, formatHour, formatRange, glucoseStatus, isValidDateString, safetyNotice,
+  shiftMonth, trendSentence, validateReading,
 } from './format';
 
 const today = '2026-11-10';
@@ -49,6 +50,27 @@ describe('helpers', () => {
     expect(isValidDateString('2026-02-28')).toBe(true);
     expect(isValidDateString('2026-02-30')).toBe(false);
     expect(isValidDateString('10-11-2026')).toBe(false);
+  });
+
+  test('safetyNotice only flags very low and very high saves', () => {
+    expect(safetyNotice(53)?.title).toBe('Very low reading');
+    expect(safetyNotice(69)?.title).toBe('Low reading');
+    expect(safetyNotice(95)).toBeNull();
+    expect(safetyNotice(200)).toBeNull();
+    expect(safetyNotice(251)?.title).toBe('High reading');
+    expect(safetyNotice(400)?.title).toBe('Very high reading');
+  });
+
+  test('trendSentence', () => {
+    expect(trendSentence({ current: { average: null }, previous: { average: 100 } })).toMatch(/Log a few readings/);
+    expect(trendSentence({
+      current: { average: 117.5 },
+      previous: { average: 160 },
+      direction: 'down',
+      delta: -42.5,
+    })).toBe('This week averages 117.5 mg/dL, 42.5 lower than last week (160).');
+    expect(formatHour(0)).toBe('12:00 AM');
+    expect(formatHour(20)).toBe('8:00 PM');
   });
 
   test('shiftMonth and formatRange', () => {

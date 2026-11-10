@@ -10,6 +10,7 @@ import { useToast } from '../context/ToastContext';
 import useFetch from '../utils/useFetch';
 import { SLOTS, formatDate, slotLabel, todayLocal } from '../utils/format';
 import { Link } from 'react-router-dom';
+import { StaggeredList, MagneticButton } from '../components/motion';
 
 const PAGE_SIZE = 10;
 
@@ -72,13 +73,13 @@ export default function Readings() {
       <PageHeader
         subtitle={pagination ? `${pagination.total} ${pagination.total === 1 ? 'reading' : 'readings'}` : 'Your history'}
         title="Readings"
-        action={<Link to="/add" className="btn btn-primary btn-sm desktop-only"><Icon name="plus" size={16} strokeWidth={2.6} /> Add reading</Link>}
+        action={<Link to="/add" className="btn btn-primary btn-sm desktop-only" data-cursor="button"><Icon name="plus" size={16} strokeWidth={2.6} /> Add reading</Link>}
       />
 
       <div className="filters card">
         <div className="field field-inline">
           <label htmlFor="f-slot">Time slot</label>
-          <select id="f-slot" className="input" value={slot} onChange={(e) => { setSlot(e.target.value); setPage(1); }}>
+          <select id="f-slot" className="input" value={slot} onChange={(e) => { setSlot(e.target.value); setPage(1); }} data-cursor="input">
             <option value="">All slots</option>
             {SLOTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
           </select>
@@ -86,14 +87,14 @@ export default function Readings() {
         <div className="field field-inline">
           <label htmlFor="f-from">From</label>
           <input id="f-from" type="date" className="input" value={from} max={to || todayLocal()}
-            onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
+            onChange={(e) => { setFrom(e.target.value); setPage(1); }} data-cursor="input" />
         </div>
         <div className="field field-inline">
           <label htmlFor="f-to">To</label>
           <input id="f-to" type="date" className="input" value={to} min={from || undefined} max={todayLocal()}
-            onChange={(e) => { setTo(e.target.value); setPage(1); }} />
+            onChange={(e) => { setTo(e.target.value); setPage(1); }} data-cursor="input" />
         </div>
-        {filtered && <button className="btn-plain" onClick={resetFilters}>Clear</button>}
+        {filtered && <button className="btn-plain" onClick={resetFilters} data-cursor="link">Clear</button>}
       </div>
 
       {error && <ErrorState message={error} onRetry={reload} />}
@@ -104,19 +105,31 @@ export default function Readings() {
 
       {data && (data.data.length ? (
         <div className={loading ? 'is-loading' : ''}>
-          <GroupedReadings readings={data.data} renderAction={rowActions} />
+          <StaggeredList>
+            <GroupedReadings readings={data.data} renderAction={rowActions} />
+          </StaggeredList>
           <nav className="pager" aria-label="Pagination">
             <span className="muted">
               {(pagination.page - 1) * pagination.limit + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
             </span>
             <div className="pager-controls">
-              <button className="btn btn-secondary btn-sm" disabled={pagination.page <= 1} onClick={() => setPage(page - 1)}>
+              <MagneticButton
+                className="btn btn-secondary btn-sm"
+                disabled={pagination.page <= 1}
+                onClick={() => setPage(page - 1)}
+                data-cursor="button"
+              >
                 <Icon name="left" size={16} /> Previous
-              </button>
+              </MagneticButton>
               <span className="pager-page" aria-current="page">Page {pagination.page} of {pagination.totalPages}</span>
-              <button className="btn btn-secondary btn-sm" disabled={pagination.page >= pagination.totalPages} onClick={() => setPage(page + 1)}>
+              <MagneticButton
+                className="btn btn-secondary btn-sm"
+                disabled={pagination.page >= pagination.totalPages}
+                onClick={() => setPage(page + 1)}
+                data-cursor="button"
+              >
                 Next <Icon name="right" size={16} />
-              </button>
+              </MagneticButton>
             </div>
           </nav>
         </div>

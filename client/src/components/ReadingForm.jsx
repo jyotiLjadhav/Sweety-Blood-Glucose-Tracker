@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import api, { errorField, errorMessage } from '../api';
 import {
   MAX_VALUE,
@@ -8,10 +9,12 @@ import {
   defaultSlotForNow,
   glucoseStatus,
   isValidDateString,
+  safetyNotice,
   todayLocal,
   validateReading,
 } from '../utils/format';
 import { useToast } from '../context/ToastContext';
+import SafetyAlert from './SafetyAlert';
 
 /**
  * Add / edit a glucose reading.
@@ -32,6 +35,9 @@ export default function ReadingForm({ initial, onSaved, onCancel }) {
   const [submitting, setSubmitting] = useState(false);
   const [existing, setExisting] = useState([]);
   const [refresh, setRefresh] = useState(0);
+  const [safety, setSafety] = useState(null);
+  const [pending, setPending] = useState(null);
+  const [done, setDone] = useState(false);
 
   // Readings already saved for the selected date
   useEffect(() => {
@@ -73,6 +79,7 @@ export default function ReadingForm({ initial, onSaved, onCancel }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setFormError('');
+    setDone(false);
     const found = validateReading({ value, date, slot }, { existing, editingId, today });
     if (Object.keys(found).length) {
       setErrors(found);
@@ -85,17 +92,27 @@ export default function ReadingForm({ initial, onSaved, onCancel }) {
       const res = editing
         ? await api.put(`/readings/${initial.id}`, payload)
         : await api.post('/readings', payload);
-      if (editing) {
-        onSaved?.(res.data.reading);
-      } else {
+      window.dispatchEvent(new Event('sweety:updated'));
+      setDone(true);
+      const notice = safetyNotice(payload.value);
+      const finish = () => {
+        if (editing) {
+          onSaved?.(res.data.reading);
+          return;
+        }
         toast('Reading saved');
-        // Get ready for the next one: clear the value, move to the next free slot
         const taken = new Set([...Object.keys(savedBySlot), slot]);
         const next = SLOTS.find((s) => !taken.has(s.key));
         if (next) setSlot(next.key);
         setValue('');
         setRefresh((n) => n + 1);
         onSaved?.(res.data.reading);
+      };
+      if (notice) {
+        setPending(() => finish);
+        setSafety(notice);
+      } else {
+        finish();
       }
     } catch (err) {
       const field = errorField(err);
@@ -196,14 +213,54 @@ export default function ReadingForm({ initial, onSaved, onCancel }) {
 
       {formError && <p className="form-error" role="alert">{formError}</p>}
 
+      <SafetyAlert
+        notice={safety}
+        onClose={() => {
+          setSafety(null);
+          pending?.();
+          setPending(null);
+        }}
+      />
+
       <div className="form-actions">
         {onCancel && (
-          <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={submitting}>
+          <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={submitting} data-cursor="button">
             Cancel
           </button>
         )}
-        <button type="submit" className="btn btn-primary" disabled={submitting}>
-          {submitting ? 'Saving…' : editing ? 'Save changes' : 'Save reading'}
+        <button type="submit" className="btn btn-primary" disabled={submitting || done}>
+          <span className="btn-content" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <AnimatePresence initial={false}>
+              {submitting ? (
+                <motion.span
+                  key="busy"
+                  className="btn-icon"
+                  initial={{ opacity: 0, scale: 0.4 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.4 }}
+                  transition={{ type: 'spring', stiffness: 520, damping: 38, mass: 0.8 }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M21 12a9 9 0 1 1-6.2-8.6" />
+                  </svg>
+                </motion.span>
+              ) : done ? (
+                <motion.span
+                  key="done"
+                  className="btn-icon"
+                  initial={{ opacity: 0, scale: 0.4, rotate: -180 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 0.4 }}
+                  transition={{ type: 'spring', stiffness: 520, damping: 38, mass: 0.8 }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </motion.span>
+              ) : null}
+            </AnimatePresence>
+            <span>{submitting ? 'Saving…' : done ? 'Saved' : editing ? 'Save changes' : 'Save reading'}</span>
+          </span>
         </button>
       </div>
     </form>

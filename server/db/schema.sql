@@ -22,3 +22,11 @@ CREATE TABLE IF NOT EXISTS readings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_readings_user_date ON readings (user_id, reading_date);
+
+-- One reminder preference per person. Hour is 0–23 in APP_TIMEZONE.
+CREATE TABLE IF NOT EXISTS reminder_prefs (
+  user_id      INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  enabled      BOOLEAN     NOT NULL DEFAULT TRUE,
+  remind_hour  SMALLINT    NOT NULL DEFAULT 20 CHECK (remind_hour BETWEEN 0 AND 23),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

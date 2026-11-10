@@ -26,6 +26,7 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/readings', require('./routes/readings'));
 app.use('/api/reports', require('./routes/reports'));
+app.use('/api/reminders', require('./routes/reminders'));
 
 // Optionally serve the built React app (single-container deployments)
 const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');

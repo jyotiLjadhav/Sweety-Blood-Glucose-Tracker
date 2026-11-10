@@ -47,6 +47,25 @@ function lockUser(client, userId) {
   return client.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [userId]);
 }
 
+// GET /api/readings/export – CSV of this user's readings
+router.get('/export', async (req, res, next) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT reading_date, slot, value FROM readings
+       WHERE user_id = $1
+       ORDER BY reading_date ASC, ${SLOT_ORDER} ASC`,
+      [req.user.id]
+    );
+    const lines = ['date,slot,value_mg_dl'];
+    rows.forEach((r) => lines.push(`${r.reading_date},${r.slot},${r.value}`));
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="sweety-readings.csv"');
+    res.send(`${lines.join('\n')}\n`);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/readings?page=1&limit=10&from=YYYY-MM-DD&to=YYYY-MM-DD&slot=morning
 router.get('/', async (req, res, next) => {
   try {

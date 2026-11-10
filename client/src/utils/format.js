@@ -71,6 +71,67 @@ export function glucoseStatus(value) {
   return { key: 'normal', label: 'In range' };
 }
 
+/**
+ * Shown right after a save when the number needs attention.
+ * Under 70 or over 250. Under 54 and 400+ use stronger wording.
+ * Returns null for everyday highs and in-range values.
+ */
+export function safetyNotice(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (n < 54) {
+    return {
+      tone: 'urgent',
+      title: 'Very low reading',
+      message: 'This reading is under 54 mg/dL. If you feel shaky, sweaty, or confused, take fast-acting sugar now and follow your care plan. Call for help if it does not come up.',
+    };
+  }
+  if (n < LOW_BELOW) {
+    return {
+      tone: 'low',
+      title: 'Low reading',
+      message: 'This reading is under 70 mg/dL. Recheck soon, and treat a low the way your clinician showed you if you have symptoms.',
+    };
+  }
+  if (n >= 400) {
+    return {
+      tone: 'urgent',
+      title: 'Very high reading',
+      message: 'This reading is extremely high. Contact your clinician or urgent care, especially if you feel sick.',
+    };
+  }
+  if (n > 250) {
+    return {
+      tone: 'high',
+      title: 'High reading',
+      message: 'This reading is above 250 mg/dL. Drink water, recheck, and follow your high-glucose plan. Seek care if you feel unwell or the number keeps rising.',
+    };
+  }
+  return null;
+}
+
+/** Plain sentence for the 7-day average compared with the week before. */
+export function trendSentence(weeks) {
+  if (!weeks?.current || weeks.current.average == null) {
+    return 'Log a few readings this week to see how you compare with last week.';
+  }
+  if (weeks.previous?.average == null) {
+    return `This week’s average is ${weeks.current.average} mg/dL. Last week doesn’t have enough readings to compare yet.`;
+  }
+  if (weeks.direction === 'flat') {
+    return `This week matches last week, at about ${weeks.current.average} mg/dL.`;
+  }
+  const word = weeks.direction === 'down' ? 'lower' : 'higher';
+  return `This week averages ${weeks.current.average} mg/dL, ${Math.abs(weeks.delta)} ${word} than last week (${weeks.previous.average}).`;
+}
+
+export function formatHour(hour) {
+  const h = Number(hour);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const hr = h % 12 === 0 ? 12 : h % 12;
+  return `${hr}:00 ${suffix}`;
+}
+
 export function greeting(now = new Date()) {
   const h = now.getHours();
   if (h < 12) return 'Good morning';

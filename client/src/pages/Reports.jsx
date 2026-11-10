@@ -7,8 +7,10 @@ import { HIGH_ABOVE, LOW_BELOW, formatRange, glucoseStatus, todayLocal } from '.
 
 const TABS = [
   { key: 'daily', label: 'Daily', path: '/reports/daily', note: 'Readings for the selected date.' },
+  { key: 'weekly', label: 'Weekly', path: '/reports/weekly', note: 'The ISO week containing the selected date.' },
   { key: 'mtd', label: 'Month to date', path: '/reports/month-to-date', note: '1st of the selected month up to the selected date.' },
   { key: 'monthly', label: 'Previous month', path: '/reports/monthly', note: 'The entire month before the selected date’s month.' },
+  { key: 'custom', label: 'Custom', path: '/reports/custom', note: 'Pick a from and to date range.' },
 ];
 
 export default function Reports() {
@@ -37,7 +39,7 @@ export default function Reports() {
       <div className="report-controls">
         <div className="segmented" role="tablist" aria-label="Report type">
           {TABS.map((t) => (
-            <button key={t.key} role="tab" aria-selected={tab === t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>
+            <button key={t.key} role="tab" aria-selected={tab === t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)} data-cursor="link">
               {t.label}
             </button>
           ))}
@@ -45,7 +47,7 @@ export default function Reports() {
         <div className="field field-inline">
           <label htmlFor="report-date">Selected date</label>
           <input id="report-date" type="date" className="input" value={date} max={today}
-            onChange={(e) => setDate(e.target.value || today)} />
+            onChange={(e) => setDate(e.target.value || today)} data-cursor="input" />
         </div>
       </div>
 

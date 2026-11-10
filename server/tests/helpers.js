@@ -6,7 +6,7 @@ const { todayString, addDays } = require('../src/utils/dates');
 
 async function resetDb() {
   await init();
-  await db.query('TRUNCATE readings, users RESTART IDENTITY CASCADE');
+  await db.query('TRUNCATE readings, reminder_prefs, users RESTART IDENTITY CASCADE');
 }
 
 let counter = 0;

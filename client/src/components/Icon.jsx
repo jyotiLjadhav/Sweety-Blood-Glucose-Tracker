@@ -15,6 +15,8 @@ const PATHS = {
   user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   filter: 'M22 3H2l8 9.5V19l4 2v-8.5L22 3z',
   x: 'M18 6L6 18M6 6l12 12',
+  bell: 'M6 8a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9M10 21h4',
+  download: 'M12 3v12M7 11l5 5 5-5M5 21h14',
 };
 
 export default function Icon({ name, size = 22, strokeWidth = 1.9, className = '' }) {

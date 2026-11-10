@@ -13,6 +13,7 @@ import {
   HIGH_ABOVE, LOW_BELOW, SLOTS, formatDate, formatLong, glucoseStatus, greeting, monthOf,
   monthTitle, parseDate, shiftMonth, todayLocal,
 } from '../utils/format';
+import { StaggeredList, staggerItem, CountUp, RevealCard, motion } from '../components/motion';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -64,7 +65,7 @@ export default function Dashboard() {
       <PageHeader
         subtitle={formatLong(today)}
         title={`${greeting()}, ${user?.name?.split(' ')[0] ?? ''}`}
-        action={<Link to="/add" className="btn btn-primary btn-sm desktop-only"><Icon name="plus" size={16} strokeWidth={2.6} /> Add reading</Link>}
+        action={<Link to="/add" className="btn btn-primary btn-sm desktop-only" data-cursor="button"><Icon name="plus" size={16} strokeWidth={2.6} /> Add reading</Link>}
       />
 
       {summary.error && <ErrorState message={summary.error} onRetry={summary.reload} />}
@@ -77,61 +78,67 @@ export default function Dashboard() {
               <h2 id="today-h">Today</h2>
               <span className="muted">{summary.loading ? '' : `${loggedToday} of 4 logged`}</span>
             </div>
-            <div className="today-grid">
-              {SLOTS.map((s) => {
-                const v = todayBySlot[s.key];
-                const st = v != null ? glucoseStatus(v) : null;
-                return (
-                  <Link key={s.key} to="/add" className={`today-slot ${v != null ? 'done' : ''}`} style={{ '--slot-color': s.color }}>
-                    <span className="today-slot-label"><SlotDot slot={s.key} />{s.label}</span>
-                    {summary.loading ? <Skeleton height={26} width={60} /> : v != null ? (
-                      <span className={`today-slot-value status-${st.key}`}>{v}<small>mg/dL</small></span>
-                    ) : (
-                      <span className="today-slot-empty"><Icon name="plus" size={16} strokeWidth={2.6} /> Add</span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
+            <StaggeredList>
+              <div className="today-grid">
+                {SLOTS.map((s) => {
+                  const v = todayBySlot[s.key];
+                  const st = v != null ? glucoseStatus(v) : null;
+                  return (
+                    <motion.div key={s.key} variants={staggerItem} whileTap={{ scale: 0.95 }}>
+                      <Link to="/add" className={`today-slot ${v != null ? 'done' : ''}`} style={{ '--slot-color': s.color }} data-cursor="button">
+                        <span className="today-slot-label"><SlotDot slot={s.key} />{s.label}</span>
+                        {summary.loading ? <Skeleton height={26} width={60} /> : v != null ? (
+                          <span className={`today-slot-value status-${st.key}`}><CountUp value={v} /><small>mg/dL</small></span>
+                        ) : (
+                          <span className="today-slot-empty"><Icon name="plus" size={16} strokeWidth={2.6} /> Add</span>
+                        )}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </StaggeredList>
           </section>
 
           {/* Month to date */}
           <section aria-labelledby="mtd-h">
             <div className="section-head">
               <h2 id="mtd-h">This month so far</h2>
-              <Link to="/reports" className="link">All reports <Icon name="right" size={14} /></Link>
+              <Link to="/reports" className="link" data-cursor="link">All reports <Icon name="right" size={14} /></Link>
             </div>
-            <div className="stat-grid">
-              {summary.loading ? (
-                [0, 1, 2, 3].map((i) => <div className="stat" key={i}><Skeleton height={12} width="50%" /><Skeleton height={30} width="70%" style={{ marginTop: 10 }} /></div>)
-              ) : (
-                <>
-                  <StatCard label="Average" value={summary.data.mtd.stats.average} unit="mg/dL" tone="blue" />
-                  <StatCard label="Highest" value={summary.data.mtd.stats.highest} unit="mg/dL" tone="orange" />
-                  <StatCard label="Lowest" value={summary.data.mtd.stats.lowest} unit="mg/dL" tone="purple" />
-                  <StatCard label="In range" value={inRange} unit="%" tone="green"
-                    sub={`${LOW_BELOW}–${HIGH_ABOVE} mg/dL · ${summary.data.mtd.stats.count} readings`} />
-                </>
-              )}
-            </div>
+            <StaggeredList>
+              <div className="stat-grid">
+                {summary.loading ? (
+                  [0, 1, 2, 3].map((i) => <div className="stat" key={i}><Skeleton height={12} width="50%" /><Skeleton height={30} width="70%" style={{ marginTop: 10 }} /></div>)
+                ) : (
+                  <>
+                    <RevealCard delay={0}><StatCard label="Average" value={summary.data.mtd.stats.average} unit="mg/dL" tone="blue" /></RevealCard>
+                    <RevealCard delay={0.05}><StatCard label="Highest" value={summary.data.mtd.stats.highest} unit="mg/dL" tone="orange" /></RevealCard>
+                    <RevealCard delay={0.1}><StatCard label="Lowest" value={summary.data.mtd.stats.lowest} unit="mg/dL" tone="purple" /></RevealCard>
+                    <RevealCard delay={0.15}><StatCard label="In range" value={inRange} unit="%" tone="green"
+                      sub={`${LOW_BELOW}–${HIGH_ABOVE} mg/dL · ${summary.data.mtd.stats.count} readings`} /></RevealCard>
+                  </>
+                )}
+              </div>
+            </StaggeredList>
           </section>
 
           {/* Chart */}
           <section className="card chart-card" aria-labelledby="chart-h">
             <div className="card-head wrap">
               <div className="month-switch">
-                <button className="icon-btn" aria-label="Previous month" onClick={() => setMonth(shiftMonth(month, -1))}>
+                <button className="icon-btn" aria-label="Previous month" onClick={() => setMonth(shiftMonth(month, -1))} data-cursor="button">
                   <Icon name="left" size={20} />
                 </button>
                 <h2 id="chart-h">{monthTitle(month)}</h2>
                 <button className="icon-btn" aria-label="Next month" disabled={month >= thisMonth}
-                  onClick={() => setMonth(shiftMonth(month, 1))}>
+                  onClick={() => setMonth(shiftMonth(month, 1))} data-cursor="button">
                   <Icon name="right" size={20} />
                 </button>
               </div>
               <div className="segmented segmented-sm" role="tablist" aria-label="Chart view">
-                <button role="tab" aria-selected={mode === 'average'} className={mode === 'average' ? 'active' : ''} onClick={() => setMode('average')}>Daily average</button>
-                <button role="tab" aria-selected={mode === 'slots'} className={mode === 'slots' ? 'active' : ''} onClick={() => setMode('slots')}>By time slot</button>
+                <button role="tab" aria-selected={mode === 'average'} className={mode === 'average' ? 'active' : ''} onClick={() => setMode('average')} data-cursor="link">Daily average</button>
+                <button role="tab" aria-selected={mode === 'slots'} className={mode === 'slots' ? 'active' : ''} onClick={() => setMode('slots')} data-cursor="link">By time slot</button>
               </div>
             </div>
 
@@ -156,12 +163,14 @@ export default function Dashboard() {
           <section aria-labelledby="recent-h">
             <div className="section-head">
               <h2 id="recent-h">Recent readings</h2>
-              <Link to="/readings" className="link">See all <Icon name="right" size={14} /></Link>
+              <Link to="/readings" className="link" data-cursor="link">See all <Icon name="right" size={14} /></Link>
             </div>
             {summary.loading ? (
               <div className="list"><div className="list-row"><Skeleton height={20} /></div><div className="list-row"><Skeleton height={20} /></div></div>
             ) : hasAny ? (
-              <GroupedReadings readings={summary.data.recent} />
+              <StaggeredList>
+                <GroupedReadings readings={summary.data.recent} />
+              </StaggeredList>
             ) : (
               <EmptyState title="No readings yet" message="Log your first blood glucose reading to see your stats and charts here."
                 actionTo="/add" actionLabel="Add your first reading" />

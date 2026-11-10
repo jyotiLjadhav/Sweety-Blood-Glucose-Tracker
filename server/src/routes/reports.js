@@ -8,7 +8,11 @@ const {
   firstOfMonth,
   lastOfMonth,
   previousMonthRange,
+  addDays,
 } = require('../utils/dates');
+const { weekRange } = require('./reportHelpers');
+const { buildInsights } = require('../insights');
+const { buildReportPdf } = require('./reportPdf');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -58,6 +62,37 @@ async function buildReport(userId, type, from, to) {
   };
 }
 
+// GET /api/reports/insights – streak, 7-day trend, time in range, estimated HbA1c, slot averages
+router.get('/insights', async (req, res, next) => {
+  try {
+    const today = todayString();
+    const from = addDays(today, -89);
+    const [recent, dates] = await Promise.all([
+      db.query(
+        `SELECT reading_date, slot, value
+         FROM readings
+         WHERE user_id = $1 AND reading_date BETWEEN $2 AND $3`,
+        [req.user.id, from, today]
+      ),
+      db.query(
+        `SELECT DISTINCT reading_date
+         FROM readings
+         WHERE user_id = $1 AND reading_date <= $2
+         ORDER BY reading_date DESC`,
+        [req.user.id, today]
+      ),
+    ]);
+    const rows = recent.rows.map((r) => ({
+      reading_date: r.reading_date,
+      slot: r.slot,
+      value: Number(r.value),
+    }));
+    res.json(buildInsights(rows, dates.rows.map((r) => r.reading_date), today));
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/reports/daily?date=YYYY-MM-DD
 router.get('/daily', async (req, res, next) => {
   try {
@@ -84,6 +119,80 @@ router.get('/monthly', async (req, res, next) => {
     const date = selectedDate(req);
     const { from, to } = previousMonthRange(date);
     res.json(await buildReport(req.user.id, 'monthly', from, to));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/reports/weekly?date=YYYY-MM-DD  (ISO week containing date)
+router.get('/weekly', async (req, res, next) => {
+  try {
+    const date = selectedDate(req);
+    const [from, to] = weekRange(date);
+    res.json(await buildReport(req.user.id, 'weekly', from, to));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/reports/custom?from=YYYY-MM-DD&to=YYYY-MM-DD
+router.get('/custom', async (req, res, next) => {
+  try {
+    const from = req.query.from;
+    const to = req.query.to;
+    if (!from || !to) {
+      throw new HttpError(400, 'Please provide from and to dates.', 'from');
+    }
+    if (!isValidDateString(from) || !isValidDateString(to)) {
+      throw new HttpError(400, 'Please provide valid dates (YYYY-MM-DD).', 'from');
+    }
+    if (from > to) {
+      throw new HttpError(400, 'from must be on or before to.', 'from');
+    }
+    res.json(await buildReport(req.user.id, 'custom', from, to));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/reports/pdf?type=daily&date=YYYY-MM-DD  → PDF download
+router.get('/pdf', async (req, res, next) => {
+  try {
+    const type = req.query.type;
+    const date = req.query.date || todayString();
+    let from, to, reportType;
+    switch (type) {
+      case 'daily': {
+        if (!isValidDateString(date)) throw new HttpError(400, 'Invalid date.', 'date');
+        from = to = date; reportType = 'Daily'; break;
+      }
+      case 'weekly': {
+        if (!isValidDateString(date)) throw new HttpError(400, 'Invalid date.', 'date');
+        [from, to] = weekRange(date); reportType = 'Weekly'; break;
+      }
+      case 'month-to-date': {
+        if (!isValidDateString(date)) throw new HttpError(400, 'Invalid date.', 'date');
+        from = firstOfMonth(date); to = date; reportType = 'Month to date'; break;
+      }
+      case 'monthly': {
+        if (!isValidDateString(date)) throw new HttpError(400, 'Invalid date.', 'date');
+        ({ from, to } = previousMonthRange(date)); reportType = 'Previous month'; break;
+      }
+      case 'custom': {
+        from = req.query.from; to = req.query.to;
+        if (!from || !to || !isValidDateString(from) || !isValidDateString(to) || from > to) {
+          throw new HttpError(400, 'from and to (YYYY-MM-DD) are required.', 'from');
+        }
+        reportType = 'Custom range'; break;
+      }
+      default:
+        throw new HttpError(400, 'Please provide a valid type (daily, weekly, month-to-date, monthly, custom).', 'type');
+    }
+    const report = await buildReport(req.user.id, type, from, to);
+    const pdf = await buildReportPdf(reportType, report);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', `attachment; filename="sweety-report-${reportType.toLowerCase().replace(/ /g, '-')}-${from}.pdf"`);
+    pdf.pipe(res);
   } catch (err) {
     next(err);
   }

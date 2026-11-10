@@ -248,3 +248,27 @@ describe('data isolation between users', () => {
     expect(rows[0].value).toBe(100); // untouched
   });
 });
+
+describe('GET /api/readings/export', () => {
+  test('returns this user’s readings as CSV and nothing from anyone else', async () => {
+    const a = await createUser();
+    const b = await createUser();
+    await insertReadings(a.user.id, [
+      [daysFromToday(-1), 'after_dinner', 150],
+      [today(), 'morning', 95],
+    ]);
+    await insertReadings(b.user.id, [[today(), 'morning', 400]]);
+
+    const res = await request(app).get('/api/readings/export').set(auth(a.token));
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/text\/csv/);
+    expect(res.text).toBe(
+      `date,slot,value_mg_dl\n${daysFromToday(-1)},after_dinner,150\n${today()},morning,95\n`
+    );
+  });
+
+  test('requires authentication', async () => {
+    const res = await request(app).get('/api/readings/export');
+    expect(res.status).toBe(401);
+  });
+});

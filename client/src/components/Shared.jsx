@@ -1,6 +1,8 @@
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { formatLong, glucoseStatus, slotByKey } from '../utils/format';
 import Icon from './Icon';
+import { staggerItem } from './motion';
 
 export function StatCard({ label, value, unit, tone, sub }) {
   return (
@@ -26,12 +28,17 @@ export function SlotDot({ slot }) {
 
 export function EmptyState({ title, message, actionTo, actionLabel, icon = 'drop' }) {
   return (
-    <div className="empty">
+    <motion.div
+      className="empty"
+      initial={{ opacity: 0, y: 18, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 340, damping: 32, mass: 0.9 }}
+    >
       <div className="empty-icon"><Icon name={icon} size={30} /></div>
       <h3>{title}</h3>
       <p>{message}</p>
-      {actionTo && <Link to={actionTo} className="btn btn-primary">{actionLabel}</Link>}
-    </div>
+      {actionTo && <Link to={actionTo} className="btn btn-primary" data-cursor="link">{actionLabel}</Link>}
+    </motion.div>
   );
 }
 
@@ -41,7 +48,7 @@ export function ErrorState({ message, onRetry }) {
       <div className="empty-icon"><Icon name="alert" size={30} /></div>
       <h3>Couldn’t load this</h3>
       <p>{message}</p>
-      {onRetry && <button className="btn btn-secondary" onClick={onRetry}>Try again</button>}
+      {onRetry && <button className="btn btn-secondary" onClick={onRetry} data-cursor="button">Try again</button>}
     </div>
   );
 }
@@ -64,7 +71,14 @@ export function GroupedReadings({ readings, renderAction }) {
       <h3 className="group-title">{formatLong(g.date)}</h3>
       <ul className="list">
         {g.items.map((r) => (
-          <li key={r.id} className="list-row">
+          <motion.li
+            key={r.id}
+            className="list-row"
+            variants={staggerItem}
+            layout
+            whileHover={{ scale: 1.012 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+          >
             <SlotDot slot={r.slot} />
             <div className="row-main">
               <span className="row-title">{slotByKey(r.slot)?.label}</span>
@@ -75,7 +89,7 @@ export function GroupedReadings({ readings, renderAction }) {
             </span>
             <StatusBadge value={r.value} />
             {renderAction?.(r)}
-          </li>
+          </motion.li>
         ))}
       </ul>
     </section>

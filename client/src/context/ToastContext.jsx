@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Icon from '../components/Icon';
 
 const ToastContext = createContext(() => {});
@@ -24,12 +25,25 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={value}>
       {children}
       <div className="toast-region" aria-live="polite" aria-atomic="false">
-        {toasts.map((t) => (
-          <div key={t.id} className={`toast toast-${t.type}`} role="status">
-            <Icon name={t.type === 'error' ? 'alert' : 'check'} size={18} />
-            <span>{t.message}</span>
-          </div>
-        ))}
+        <AnimatePresence initial={false}>
+          {toasts.map((t) => (
+            <motion.div
+              key={t.id}
+              layout
+              className={`toast toast-${t.type}`}
+              role="status"
+              initial={{ opacity: 0, y: -40, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 520, damping: 38, mass: 0.8 }}
+            >
+              <span className="toast-icon">
+                {t.type === 'error' ? <Icon name="alert" size={18} /> : <Icon name="check" size={18} />}
+              </span>
+              <span>{t.message}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

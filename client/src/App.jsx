@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+﻿import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import { Logo } from './components/Icon';
@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Readings from './pages/Readings';
 import AddReading from './pages/AddReading';
 import Reports from './pages/Reports';
+import CustomCursor from './components/CustomCursor';
 
 function Splash() {
   return (
@@ -28,16 +29,19 @@ export default function App() {
   const { loading } = useAuth();
   if (loading) return <Splash />;
 
-  return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route element={<ProtectedRoutes />}>
-        <Route index element={<Dashboard />} />
-        <Route path="readings" element={<Readings />} />
-        <Route path="add" element={<AddReading />} />
-        <Route path="reports" element={<Reports />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+return (
+    <>
+      <CustomCursor />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route element={<ProtectedRoutes />}>
+          <Route index element={<Dashboard />} />
+          <Route path="readings" element={<Readings />} />
+          <Route path="add" element={<AddReading />} />
+          <Route path="reports" element={<Reports />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }

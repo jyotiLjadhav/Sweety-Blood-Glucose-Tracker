@@ -22,6 +22,7 @@ export default function PageHeader({ title, subtitle, action }) {
             className="avatar avatar-btn mobile-only"
             onClick={() => setOpen(true)}
             aria-label="Account"
+            data-cursor="link"
           >
             {initials(user?.name)}
           </button>
@@ -34,7 +35,7 @@ export default function PageHeader({ title, subtitle, action }) {
           <strong>{user?.name}</strong>
           <span>{user?.email}</span>
         </div>
-        <button className="btn btn-danger-soft btn-block" onClick={logout}>
+        <button className="btn btn-danger-soft btn-block" onClick={logout} data-cursor="danger">
           <Icon name="logout" size={18} /> Log out
         </button>
       </Sheet>
